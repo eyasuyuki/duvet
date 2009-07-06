@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+  xmlns:android="http://schemas.android.com/apk/res/android">
+	<EditTextPreference
+		android:key="uri"
+		android:title="@string/uri_title"
+		android:summary="@string/uri_summary"
+		/>
+	<EditTextPreference
+		android:key="nickname"
+		android:title="@string/nickname_title"
+		android:summary="@string/nickname_summary"
+		/>
+</PreferenceScreen>
