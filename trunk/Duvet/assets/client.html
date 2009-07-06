@@ -1,0 +1,18 @@
+<html><head><title>Chaton</title>
+<link href="chaton.css" rel="Stylesheet" type="text/css" />
+<script language="JavaScript">
+	function updateMessage(arg) {
+		var message = window.chaton.getChatMessage();
+		var nc = window.chaton.getNc();
+		var html = document.getElementById('view-pane').innerHTML;
+		document.getElementById('view-pane').innerHTML = html + message;
+		document.getElementById('status-line').innerHTML = 'Connected (' + nc + ' users chatting)';
+		window.scrollTo(0,document.body.scrollHeight); // bottom
+	}
+</script>
+</head>
+<body<div id="view-pane"></div>
+<div id="status-pane"><p id="status-line">Connecting...</p>
+</div>
+</body>
+</html>
