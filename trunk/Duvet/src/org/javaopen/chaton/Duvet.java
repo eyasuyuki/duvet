@@ -9,6 +9,7 @@ import org.apache.http.client.ClientProtocolException;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -27,7 +28,11 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 public class Duvet extends Activity {
-	private static final String TAG = "Chaton";
+	private static final String TAG = "Duvet";
+	
+	public static final int PROGRESS_DIALOG = 0;
+	
+	private ProgressDialog dialog;
 	
 	private Handler handler;
 	private Client client;
@@ -66,7 +71,7 @@ public class Duvet extends Activity {
         sayButton = (Button)findViewById(R.id.say_button);
         
         webView.getSettings().setJavaScriptEnabled(true);
-        webView.addJavascriptInterface(new AndroidBridge(), "chaton");
+        webView.addJavascriptInterface(new AndroidBridge(), "duvet");
         webView.loadUrl("file:///android_asset/client.html");
 
         
@@ -75,6 +80,7 @@ public class Duvet extends Activity {
 
         client = (Client)this.getLastNonConfigurationInstance();
         if (client == null) {
+        	if (dialog != null && dialog.isShowing()) dialog.dismiss(); 
             Dialog r = new RoomDialog(this);
             r.setTitle("Setup Room uri and Nickname");
             r.show();
@@ -107,6 +113,10 @@ public class Duvet extends Activity {
         HashMap<String, String> map = new HashMap<String, String>();
         map.put(Client.WHO_KEY, Settings.getNickname(this));
         final Context me = this;
+        dialog =
+        	ProgressDialog.show(this, "", "Loading. Please wait...", true, true);
+        dialog.show();
+        final Dialog progress = dialog;
         try {
 			String sexp = RestfulClient.Post(logpath.toString(), map);
 			Log.d(TAG, "sexp=" + sexp);
@@ -122,6 +132,7 @@ public class Duvet extends Activity {
 						public void run() {
 							view.loadUrl("javascript:updateMessage()");
 							view.pageDown(true); // bottom
+							progress.dismiss(); // test
 						}
 					});
 				}
