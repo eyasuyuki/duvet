@@ -2,8 +2,8 @@
 <link href="chaton.css" rel="Stylesheet" type="text/css" />
 <script language="JavaScript">
 	function updateMessage(arg) {
-		var message = window.chaton.getChatMessage();
-		var nc = window.chaton.getNc();
+		var message = window.duvet.getChatMessage();
+		var nc = window.duvet.getNc();
 		var html = document.getElementById('view-pane').innerHTML;
 		document.getElementById('view-pane').innerHTML = html + message;
 		document.getElementById('status-line').innerHTML = 'Connected (' + nc + ' users chatting)';
