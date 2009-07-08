@@ -2,6 +2,9 @@
 <link href="chaton.css" rel="Stylesheet" type="text/css" />
 <script language="JavaScript">
 	function updateMessage(arg) {
+		window.addEventListener("load", function () {
+			window.scrollTo(0, document.body.scrollHeight);
+		});
 		var message = window.duvet.getChatMessage();
 		var nc = window.duvet.getNc();
 		var html = document.getElementById('view-pane').innerHTML;
@@ -12,7 +15,7 @@
 </script>
 <script src="chaton.js"></script>
 </head>
-<body<div id="view-pane"></div>
+<body><div id="view-pane"></div>
 <div id="status-pane"><p id="status-line">Connecting...</p>
 </div>
 </body>
