@@ -18,9 +18,9 @@ public class RoomDialog extends Dialog {
 	private Button cancelButton;
 	private Context context;
 
-	public RoomDialog(Context chaton) {
-		super(chaton);
-		this.context = chaton;
+	public RoomDialog(Context context) {
+		super(context);
+		this.context = context;
 	}
 
 	@Override
