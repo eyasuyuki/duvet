@@ -2,15 +2,15 @@
 <link href="chaton.css" rel="Stylesheet" type="text/css" />
 <script language="JavaScript">
 	function updateMessage(arg) {
-		window.addEventListener("load", function () {
-			window.scrollTo(0, document.body.scrollHeight);
-		});
 		var message = window.duvet.getChatMessage();
 		var nc = window.duvet.getNc();
 		var html = document.getElementById('view-pane').innerHTML;
 		document.getElementById('view-pane').innerHTML = html + message;
 		document.getElementById('status-line').innerHTML = 'Connected (' + nc + ' users chatting)';
 		window.scrollTo(0,document.body.scrollHeight); // bottom
+	}
+	function scrollToBottom() {
+		window.scrollTo(0, document.body.scrollHeight);
 	}
 </script>
 <script src="chaton.js"></script>
@@ -19,4 +19,10 @@
 <div id="status-pane"><p id="status-line">Connecting...</p>
 </div>
 </body>
+<script language="JavaScript">
+window.addEventListener("DOMCharacterDataModified", scrollToBottom);
+window.addEventListener("DOMSubtreeModified", scrollToBottom);
+window.addEventListener("DOMNodeInserted", scrollToBottom);
+window.addEventListener("DOMAttrModified", scrollToBottom);
+</script>
 </html>
