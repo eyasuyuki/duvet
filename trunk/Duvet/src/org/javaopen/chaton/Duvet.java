@@ -12,6 +12,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,6 +24,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -72,8 +74,28 @@ public class Duvet extends Activity {
         
         webView.getSettings().setJavaScriptEnabled(true);
         webView.addJavascriptInterface(new AndroidBridge(), "duvet");
+        webView.setWebViewClient(new WebViewClient() {
+        	private static final String TAG = "WebViewClient";
+        	@Override
+			public void onLoadResource(WebView view, String url) {
+        		Log.d(TAG, "loadResouce");
+        		view.pageDown(true);
+			}
+			@Override
+        	public void onPageStarted(WebView view, String url, Bitmap favicon) {
+        		Log.d(TAG, "pageStarted");
+                dialog =
+                	ProgressDialog.show(Duvet.this, "", "Loading. Please wait...", true, true);
+                dialog.show();
+        	}
+        	@Override
+			public void onPageFinished(WebView view, String url) {
+        		Log.d(TAG, "pageFinished");
+            	if (dialog != null && dialog.isShowing()) dialog.dismiss(); 
+        		view.pageDown(true);
+        	}
+        });
         webView.loadUrl("file:///android_asset/client.html");
-
         
         String uri = Settings.getUri(this);
         String nickname = Settings.getNickname(this);
@@ -113,10 +135,6 @@ public class Duvet extends Activity {
         HashMap<String, String> map = new HashMap<String, String>();
         map.put(Client.WHO_KEY, Settings.getNickname(this));
         final Context me = this;
-        dialog =
-        	ProgressDialog.show(this, "", "Loading. Please wait...", true, true);
-        dialog.show();
-        final Dialog progress = dialog;
         try {
 			String sexp = RestfulClient.Post(logpath.toString(), map);
 			Log.d(TAG, "sexp=" + sexp);
@@ -131,8 +149,6 @@ public class Duvet extends Activity {
 					handler.post(new Runnable() {
 						public void run() {
 							view.loadUrl("javascript:updateMessage()");
-							view.pageDown(true); // bottom
-							progress.dismiss(); // test
 						}
 					});
 				}
