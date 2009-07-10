@@ -222,9 +222,9 @@ function showStatus(text, klass) {
 function checkImageSize(img) {
     var img = $(img);
     if (img.width > img.height) {
-        if (img.width > @@img-size-limit@@) img.addClassName('wshrunk');
+        if (img.width > 400) img.addClassName('wshrunk');
     } else {
-        if (img.height > @@img-size-limit@@) img.addClassName('hshrunk');
+        if (img.height > 400) img.addClassName('hshrunk');
     }
     img.style.display = 'inline';
     img.removeClassName('hide-while-loading');
