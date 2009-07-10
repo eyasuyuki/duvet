@@ -14,8 +14,10 @@ import org.javaopen.lisp.Sexp;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.content.Context;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 public class Client implements Runnable {
 	private static final String TAG = "Client";
@@ -35,6 +37,7 @@ public class Client implements Runnable {
 	private static final String P_KEY        = "p";
 	private static final String C_KEY        = "c";
 
+	private Context context;
 	private String roomUri;
 	private String roomName;
 	private String postUri;
@@ -50,7 +53,7 @@ public class Client implements Runnable {
 	
 	private static final String CONTENT_KEY = "content";
 	
-	public Client(String roomUri, String listText) {
+	public Client(Context context, String roomUri, String listText) {
         Env env = new Env();
         Reader reader = new Reader(env);
 		List conn = null;
@@ -99,30 +102,38 @@ public class Client implements Runnable {
 		longPoll();
 	}
 	
+	public String fetchContent(String pos) throws ClientProtocolException, IOException, JSONException {
+		param.put(T_KEY, String.valueOf(System.currentTimeMillis()));
+		param.put(P_KEY, pos);
+		param.put(C_KEY, getCid());
+		String json = RestfulClient.Get(cometUri, param);
+		JSONObject result = new JSONObject(json);
+		setCid(result.getString(CID_KEY));
+		setPos(result.getString(POS_KEY));
+		setNc(result.getString(NC_KEY));
+		final String html = result.getString(CONTENT_KEY);
+		if (listener != null) {
+			listener.stateChanged(this, html);
+		}
+		return html;
+	}
+	
 	public void longPoll() {
-		String content = null;
 		while (true) {
 			try {
-				param.put(T_KEY, String.valueOf(System.currentTimeMillis()));
-				param.put(P_KEY, String.valueOf(pos));
-				param.put(C_KEY, String.valueOf(cid));
-				content = RestfulClient.Get(cometUri, param);
-				JSONObject result = new JSONObject(content);
-				setCid(result.getString(CID_KEY));
-				setPos(result.getString(POS_KEY));
-				setNc(result.getString(NC_KEY));
-				final String html = result.getString(CONTENT_KEY);
-				if (listener != null) {
-					listener.stateChanged(this, html);
-				}
-				//Thread.sleep(1000L);
-			//} catch (InterruptedException e) {
-			//	Log.d(TAG, "longPoll: e=" + e + ", message=" + e.getMessage());
+				fetchContent(getPos());
+				Thread.sleep(1000L);
+			} catch (InterruptedException e) {
+				Toast.makeText(context, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
+				Log.d(TAG, "longPoll: e=" + e + ", message=" + e.getMessage());
 			} catch (ClientProtocolException e) {
+				Toast.makeText(context, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
 				Log.d(TAG, "longPoll: e=" + e + ", message=" + e.getMessage());
 			} catch (IOException e) {
+				Toast.makeText(context, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
 				Log.d(TAG, "longPoll: e=" + e + ", message=" + e.getMessage());
 			} catch (JSONException e) {
+				Toast.makeText(context, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
 				Log.d(TAG, "longPoll: e=" + e + ", message=" + e.getMessage());
 			}
 		}
