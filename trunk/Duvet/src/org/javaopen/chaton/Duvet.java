@@ -39,7 +39,7 @@ public class Duvet extends Activity {
 	
 	public static final int PROGRESS_DIALOG = 0;
 	
-	private static final String HTML_BEFORE =
+	private static final String HTML_TOP =
 		"<html><head>" +
 	    "<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />\n" +
 		"<title>Chaton</title>\n" +
@@ -61,9 +61,12 @@ public class Duvet extends Activity {
 		"</head>\n" +
 		"<body onload='scrollToBottom'><div id='view-pane'>\n";
 
-	private static final String HTML_AFTER =
+	private static final String HTML_MIDDLE =
 		"</div>\n" +
-		"<div id='status-pane'><p id='status-line'>Connecting...</p>\n" +
+		"<div id='status-pane'><p id='status-line'>Connecting (";
+
+	private static final String HTML_BOTTOM =
+		" users chatting)</p>\n" +
 		"</div>\n" +
 		"<div id='bottom' />" +
 		"</body>\n" +
@@ -74,6 +77,7 @@ public class Duvet extends Activity {
 		"window.addEventListener('DOMAttrModified', scrollToBottom);\n" +
 		"</script>\n" +
 		"</html>\n";
+
 	private ProgressDialog dialog;
 	
 	private Handler handler;
@@ -198,7 +202,7 @@ public class Duvet extends Activity {
 			});
 			String content = client.fetchContent("0");
 			String htmlFile = this.getString(R.string.html_file);
-			writeHtml(htmlFile, content);
+			writeHtml(htmlFile, content, client.getNc());
 			String htmlUri = this.getString(R.string.html_uri);;
 			webView.loadUrl(htmlUri);
 			new Thread(client).start();
@@ -217,12 +221,14 @@ public class Duvet extends Activity {
 		}
     }
 	
-	private void writeHtml(String htmlFile, String content) throws FileNotFoundException, IOException {
+	private void writeHtml(String htmlFile, String content, String nc) throws FileNotFoundException, IOException {
 		FileOutputStream stream = this.openFileOutput(htmlFile, Activity.MODE_PRIVATE);
 		BufferedWriter out = new BufferedWriter(new OutputStreamWriter(stream));
-		out.write(HTML_BEFORE);
+		out.write(HTML_TOP);
 		out.write(content);
-		out.write(HTML_AFTER);
+		out.write(HTML_MIDDLE);
+		out.write(nc);
+		out.write(HTML_BOTTOM);
 		out.flush();
 		out.close();
 	}
