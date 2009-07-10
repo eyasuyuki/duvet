@@ -1,11 +1,16 @@
 package org.javaopen.chaton;
 
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.HashMap;
 
 import net.it4myself.util.RestfulClient;
 
 import org.apache.http.client.ClientProtocolException;
+import org.json.JSONException;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -34,6 +39,41 @@ public class Duvet extends Activity {
 	
 	public static final int PROGRESS_DIALOG = 0;
 	
+	private static final String HTML_BEFORE =
+		"<html><head>" +
+	    "<meta http-equiv='Content-Type' content='text/html; charset=utf-8' />\n" +
+		"<title>Chaton</title>\n" +
+		"<link href='file:///android_asset/chaton.css' rel='Stylesheet' type='text/css' />\n" +
+		"<script src='file:///android_asset/chaton.js'></script>\n" +
+		"<script src='file:///android_asset/prototype.js'></script>\n" +
+		"<script language='JavaScript'>\n" +
+		"	function updateMessage(arg) {\n" +
+		"		var message = window.duvet.getChatMessage();\n" +
+		"		var nc = window.duvet.getNc();\n" +
+		"		new Insertion.Bottom('view-pane', message);\n" +
+		"		document.getElementById('status-line').innerHTML = 'Connected (' + nc + ' users chatting)';\n" +
+		"		window.scrollTo(0,document.body.scrollHeight); // bottom\n" +
+		"	}\n" +
+		"	function scrollToBottom() {\n" +
+		"		window.scrollTo(0, document.body.scrollHeight);\n" +
+		"	}\n" +
+		"</script>\n" +
+		"</head>\n" +
+		"<body onload='scrollToBottom'><div id='view-pane'>\n";
+
+	private static final String HTML_AFTER =
+		"</div>\n" +
+		"<div id='status-pane'><p id='status-line'>Connecting...</p>\n" +
+		"</div>\n" +
+		"<div id='bottom' />" +
+		"</body>\n" +
+		"<script language='JavaScript'>\n" +
+		"window.addEventListener('DOMCharacterDataModified', scrollToBottom);\n" +
+		"window.addEventListener('DOMSubtreeModified', scrollToBottom);\n" +
+		"window.addEventListener('DOMNodeInserted', scrollToBottom);\n" +
+		"window.addEventListener('DOMAttrModified', scrollToBottom);\n" +
+		"</script>\n" +
+		"</html>\n";
 	private ProgressDialog dialog;
 	
 	private Handler handler;
@@ -95,7 +135,6 @@ public class Duvet extends Activity {
         		view.pageDown(true);
         	}
         });
-        webView.loadUrl("file:///android_asset/client.html");
         
         String uri = Settings.getUri(this);
         String nickname = Settings.getNickname(this);
@@ -107,7 +146,9 @@ public class Duvet extends Activity {
             r.setTitle("Setup Room uri and Nickname");
             r.show();
         }
-        
+//        dialog =
+//        	ProgressDialog.show(Duvet.this, "", "Loading. Please wait...", true, true);
+
         connect();
         
         sayText.setOnKeyListener(new View.OnKeyListener() {
@@ -128,6 +169,7 @@ public class Duvet extends Activity {
 	
 	private void connect() {
         // connect
+        //webView.loadUrl("file:///android_asset/client.html");
 		String uri = Settings.getUri(this);
         Uri.Builder builder =
         	Uri.parse(uri).buildUpon().appendPath(Client.LOGIN_PATH);
@@ -135,16 +177,17 @@ public class Duvet extends Activity {
         HashMap<String, String> map = new HashMap<String, String>();
         map.put(Client.WHO_KEY, Settings.getNickname(this));
         final Context me = this;
+        if (dialog != null) dialog.show();
         try {
 			String sexp = RestfulClient.Post(logpath.toString(), map);
 			Log.d(TAG, "sexp=" + sexp);
-			client = new Client(uri, sexp);
+			client = new Client(this, uri, sexp);
 			final WebView view = webView;
 			client.setOnStateChangedListener(new Client.OnStateChangedListener() {
 				public void stateChanged(Client client, String content) {
 					final String text = content;
 					Log.d(TAG, "stateChange: text=" + text);
-					setMessage(text);
+ 					setMessage(text);
 					setNumChats(client.getNc());
 					handler.post(new Runnable() {
 						public void run() {
@@ -153,19 +196,36 @@ public class Duvet extends Activity {
 					});
 				}
 			});
-			client.setPos("0"); // test
+			String content = client.fetchContent("0");
+			String htmlFile = this.getString(R.string.html_file);
+			writeHtml(htmlFile, content);
+			String htmlUri = this.getString(R.string.html_uri);;
+			webView.loadUrl(htmlUri);
 			new Thread(client).start();
+		} catch (JSONException e) {
+			Toast.makeText(this, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
+			Log.d(TAG, "connect: RuntimeException=" + e + ", message=" + e.getMessage());
 		} catch (RuntimeException e) {
-			Toast.makeText(this, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG);
+			Toast.makeText(this, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
 			Log.d(TAG, "connect: RuntimeException=" + e + ", message=" + e.getMessage());
 		} catch (ClientProtocolException e) {
-			Toast.makeText(this, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG);
+			Toast.makeText(this, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
 			Log.d(TAG, "connect: ClientProtocolException" + e + ", message=" + e.getMessage());
 		} catch (IOException e) {
-			Toast.makeText(this, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG);
+			Toast.makeText(this, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
 			Log.d(TAG, "connect: IOException=" + e + ", message=" + e.getMessage());
 		}
     }
+	
+	private void writeHtml(String htmlFile, String content) throws FileNotFoundException, IOException {
+		FileOutputStream stream = this.openFileOutput(htmlFile, Activity.MODE_PRIVATE);
+		BufferedWriter out = new BufferedWriter(new OutputStreamWriter(stream));
+		out.write(HTML_BEFORE);
+		out.write(content);
+		out.write(HTML_AFTER);
+		out.flush();
+		out.close();
+	}
 	
 	private boolean say() {
 		String text = sayText.getText().toString();
@@ -180,15 +240,15 @@ public class Duvet extends Activity {
 			sayText.getText().clear();
 			return true;
 		} catch (RuntimeException e) {
-			Toast.makeText(this, "Post Error:" + e.getMessage(), Toast.LENGTH_LONG);
+			Toast.makeText(this, "Post Error:" + e.getMessage(), Toast.LENGTH_LONG).show();
 			Log.d(TAG, e + e.getMessage());
 			return false;
 		} catch (ClientProtocolException e) {
-			Toast.makeText(this, "Post Error:" + e.getMessage(), Toast.LENGTH_LONG);
+			Toast.makeText(this, "Post Error:" + e.getMessage(), Toast.LENGTH_LONG).show();
 			Log.d(TAG, e + e.getMessage());
 			return false;
 		} catch (IOException e) {
-			Toast.makeText(this, "Post Error:" + e.getMessage(), Toast.LENGTH_LONG);
+			Toast.makeText(this, "Post Error:" + e.getMessage(), Toast.LENGTH_LONG).show();
 			Log.d(TAG, e + e.getMessage());
 			return false;
 		}
@@ -230,3 +290,4 @@ public class Duvet extends Activity {
     }
 	
 }
+
