@@ -15,4 +15,6 @@
 	<string name="uri_summary">Setup Chaton Chatroom Room's URI.</string>
 	<string name="nickname_title">Setup Nickname:</string>
 	<string name="nickname_summary">Setup your Chaton nickname.</string>
+	<string name="html_file">client.html</string>
+	<string name="html_uri">file:///data/data/org.javaopen.chaton/files/client.html#bottom</string>
 </resources>
