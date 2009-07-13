@@ -29,6 +29,9 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.w3c.dom.Document;
@@ -163,8 +166,13 @@ public class RestfulClient {
 
 	
 	private static HttpEntity DoRequest(HttpUriRequest method) throws ClientProtocolException, IOException {
-		DefaultHttpClient client = new DefaultHttpClient();
-		
+		int TIMEOUT_MILLISEC = 1000; //=1sec
+		HttpParams my_httpParams = new BasicHttpParams();;
+		HttpConnectionParams.setConnectionTimeout(my_httpParams, TIMEOUT_MILLISEC);  //set connection time out
+		HttpConnectionParams.setSoTimeout(my_httpParams, TIMEOUT_MILLISEC);
+		DefaultHttpClient client = new DefaultHttpClient(my_httpParams);
+		// set socket time out
+		// http client with given params				
 		// BASIC認証用のユーザ名が設定されていれば、BASIC認証を行う
 		if(!basicAuthUsername.equals("")){
 			URI uri = method.getURI();
