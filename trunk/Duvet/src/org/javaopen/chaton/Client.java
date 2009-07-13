@@ -19,7 +19,8 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
-public class Client implements Runnable {
+//public class Client implements Runnable {
+public class Client {
 	private static final String TAG = "Client";
 	
 	public static final String LOGIN_PATH    = "apilogin";
@@ -47,6 +48,18 @@ public class Client implements Runnable {
 	private String pos;
 	private String nc;
 	
+	private boolean isNonStop = true;
+	
+	private int count = 0;
+	
+	public boolean isNonStop() {
+		return isNonStop;
+	}
+
+	public void setNonStop(boolean isNonStop) {
+		this.isNonStop = isNonStop;
+	}
+
 	private OnStateChangedListener listener = null;
 	
 	private HashMap<String, String> param = new HashMap<String, String>();
@@ -97,10 +110,10 @@ public class Client implements Runnable {
 		setPos(String.valueOf(((org.javaopen.lisp.Integer)map.get(POS_KEY)).valueOf()));
 	}
 
-	public void run() {
-		Looper.prepare();
-		longPoll();
-	}
+//	public void run() {
+//		Looper.prepare();
+//		longPoll();
+//	}
 	
 	public String fetchContent(String pos) throws ClientProtocolException, IOException, JSONException {
 		param.put(T_KEY, String.valueOf(System.currentTimeMillis()));
@@ -119,23 +132,27 @@ public class Client implements Runnable {
 	}
 	
 	public void longPoll() {
-		while (true) {
+		while (isNonStop()) {
 			try {
 				fetchContent(getPos());
-				Thread.sleep(1000L);
-			} catch (InterruptedException e) {
-				Toast.makeText(context, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
-				Log.d(TAG, "longPoll: e=" + e + ", message=" + e.getMessage());
+				this.count++;
+				Log.d(TAG, "longPoll: count=" + count);
+//			} catch (InterruptedException e) {
+//				showError(context, e);
 			} catch (ClientProtocolException e) {
-				Toast.makeText(context, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
-				Log.d(TAG, "longPoll: e=" + e + ", message=" + e.getMessage());
+				showError(context, e);
 			} catch (IOException e) {
-				Toast.makeText(context, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
-				Log.d(TAG, "longPoll: e=" + e + ", message=" + e.getMessage());
+				showError(context, e);
 			} catch (JSONException e) {
-				Toast.makeText(context, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
-				Log.d(TAG, "longPoll: e=" + e + ", message=" + e.getMessage());
+				showError(context, e);
 			}
+		}
+	}
+	
+	public void showError(Context context, Exception e) {
+		Log.d(TAG, "longPoll: e=" + e + ", message=" + e.getMessage() + ", context=" + context);
+		if (context != null) {
+			Toast.makeText(context, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
 		}
 	}
 
@@ -196,5 +213,13 @@ public class Client implements Runnable {
 
 	public void setNc(String nc) {
 		this.nc = nc;
+	}
+
+	public Context getContext() {
+		return context;
+	}
+
+	public void setContext(Context context) {
+		this.context = context;
 	}
 }
