@@ -166,7 +166,7 @@ public class RestfulClient {
 
 	
 	private static HttpEntity DoRequest(HttpUriRequest method) throws ClientProtocolException, IOException {
-		int TIMEOUT_MILLISEC = 1000; //=1sec
+		int TIMEOUT_MILLISEC = 10000; //=10sec
 		HttpParams my_httpParams = new BasicHttpParams();;
 		HttpConnectionParams.setConnectionTimeout(my_httpParams, TIMEOUT_MILLISEC);  //set connection time out
 		HttpConnectionParams.setSoTimeout(my_httpParams, TIMEOUT_MILLISEC);
