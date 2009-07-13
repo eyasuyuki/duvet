@@ -209,8 +209,7 @@ public class Duvet extends Activity {
 			writeHtml(htmlFile, content, client.getNc());
 			String htmlUri = this.getString(R.string.html_uri);;
 			webView.loadUrl(htmlUri);
-//			new Thread(client).start();
-			clientThread = createThread();
+			if (clientThread == null) clientThread = createThread();
 		} catch (JSONException e) {
 			Toast.makeText(this, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
 			Log.d(TAG, "connect: RuntimeException=" + e + ", message=" + e.getMessage());
@@ -316,6 +315,7 @@ public class Duvet extends Activity {
 			return true;
 		case R.id.connect:
 			// TODO thread join
+			client = null; // TEST
 			connect();
 			return true;
 		}
