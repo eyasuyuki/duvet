@@ -21,6 +21,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -80,6 +81,7 @@ public class Duvet extends Activity {
 
 	private ProgressDialog dialog;
 	
+	private HandlerThread clientThread;
 	private Handler handler;
 	private Client client;
 	private WebView webView;
@@ -149,6 +151,8 @@ public class Duvet extends Activity {
             Dialog r = new RoomDialog(this);
             r.setTitle("Setup Room uri and Nickname");
             r.show();
+        } else {
+        	client.setContext(this);
         }
 //        dialog =
 //        	ProgressDialog.show(Duvet.this, "", "Loading. Please wait...", true, true);
@@ -205,7 +209,8 @@ public class Duvet extends Activity {
 			writeHtml(htmlFile, content, client.getNc());
 			String htmlUri = this.getString(R.string.html_uri);;
 			webView.loadUrl(htmlUri);
-			new Thread(client).start();
+//			new Thread(client).start();
+			clientThread = createThread();
 		} catch (JSONException e) {
 			Toast.makeText(this, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
 			Log.d(TAG, "connect: RuntimeException=" + e + ", message=" + e.getMessage());
@@ -221,6 +226,36 @@ public class Duvet extends Activity {
 		}
     }
 	
+	private HandlerThread createThread() {
+		HandlerThread thread = new HandlerThread("duvet");
+		thread.start();
+		Handler handler = new Handler(thread.getLooper());
+		handler.post(new Runnable (){
+				public void run() {
+					client.longPoll();
+				}
+			});
+		return thread;
+	}
+	
+//	@Override
+//	protected void onDestroy() {
+//		super.onDestroy();
+//		Handler handler = new Handler(clientThread.getLooper());
+//		handler.post(new Runnable() {
+//			public void run() {
+//				client.setNonStop(false);
+//			}
+//		});
+//		clientThread.getLooper().quit();
+//		try {
+//			clientThread.join();
+//		} catch (InterruptedException e) {
+//			Toast.makeText(this, "Thread Error:" + e.getMessage(), Toast.LENGTH_LONG).show();
+//			e.printStackTrace();
+//		}
+//	}
+
 	private void writeHtml(String htmlFile, String content, String nc) throws FileNotFoundException, IOException {
 		FileOutputStream stream = this.openFileOutput(htmlFile, Activity.MODE_PRIVATE);
 		BufferedWriter out = new BufferedWriter(new OutputStreamWriter(stream));
@@ -280,6 +315,7 @@ public class Duvet extends Activity {
 			startActivity(new Intent(this, Settings.class));
 			return true;
 		case R.id.connect:
+			// TODO thread join
 			connect();
 			return true;
 		}
