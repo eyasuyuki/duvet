@@ -45,6 +45,7 @@ public class RestfulClient {
     private static final String TAG = "Restful";
     public static String basicAuthUsername = "";
     public static String basicAuthPassword = "";
+    public static final int TIMEOUT = 1000;
 
 	public static String Get(String uri, HashMap<String,String> map) throws ClientProtocolException, IOException {
 		String fulluri;
@@ -166,10 +167,9 @@ public class RestfulClient {
 
 	
 	private static HttpEntity DoRequest(HttpUriRequest method) throws ClientProtocolException, IOException {
-		int TIMEOUT_MILLISEC = 10000; //=10sec
 		HttpParams my_httpParams = new BasicHttpParams();;
-		HttpConnectionParams.setConnectionTimeout(my_httpParams, TIMEOUT_MILLISEC);  //set connection time out
-		HttpConnectionParams.setSoTimeout(my_httpParams, TIMEOUT_MILLISEC);
+		HttpConnectionParams.setConnectionTimeout(my_httpParams, TIMEOUT);  //set connection time out
+		HttpConnectionParams.setSoTimeout(my_httpParams, TIMEOUT);
 		DefaultHttpClient client = new DefaultHttpClient(my_httpParams);
 		// set socket time out
 		// http client with given params				
