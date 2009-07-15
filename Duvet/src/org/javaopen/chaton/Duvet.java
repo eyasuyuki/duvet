@@ -82,7 +82,7 @@ public class Duvet extends Activity {
 	private ProgressDialog dialog;
 	
 	private HandlerThread clientThread;
-	private Handler handler;
+//	private Handler handler;
 	private Client client;
 	private WebView webView;
 	private EditText sayText;
@@ -111,8 +111,6 @@ public class Duvet extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        
-        handler = new Handler(Looper.myLooper());
 
         webView = (WebView)findViewById(R.id.web_view);
         sayText = (EditText)findViewById(R.id.say_text);
@@ -154,10 +152,17 @@ public class Duvet extends Activity {
         } else {
         	client.setContext(this);
         }
-//        dialog =
-//        	ProgressDialog.show(Duvet.this, "", "Loading. Please wait...", true, true);
+        
+        clientThread = new HandlerThread("duvet");
+        clientThread.start();
 
         connect();
+        
+        new Handler(clientThread.getLooper()).post(new Runnable() {
+        	public void run() {
+        		fetch();
+        	}
+        });
         
         sayText.setOnKeyListener(new View.OnKeyListener() {
         	public boolean onKey(View view, int keyCode, KeyEvent event) {
@@ -175,9 +180,35 @@ public class Duvet extends Activity {
         });
 	}
 	
+	private void fetch() {
+		new Handler(Looper.getMainLooper()).post(new Runnable() {
+			public void run() {
+					try {
+						client.fetchContent(client.getPos());
+					} catch (ClientProtocolException e) {
+						Log.d(TAG, "fetch: e=" + e + ", message=" + e.getMessage());
+					} catch (IOException e) {
+						Log.d(TAG, "fetch: e=" + e + ", message=" + e.getMessage());
+					} catch (JSONException e) {
+						Log.d(TAG, "fetch: e=" + e + ", message=" + e.getMessage());
+					} finally {
+						delay();
+					}
+			}
+		});
+	}
+	
+	private void delay() {
+		Log.d(TAG, "delay: clientThread=" + clientThread);
+		new Handler(clientThread.getLooper()).postDelayed(new Runnable(){
+			public void run() {
+				fetch();
+			}
+		}, RestfulClient.TIMEOUT);
+	}
+	
 	private void connect() {
         // connect
-        //webView.loadUrl("file:///android_asset/client.html");
 		String uri = Settings.getUri(this);
         Uri.Builder builder =
         	Uri.parse(uri).buildUpon().appendPath(Client.LOGIN_PATH);
@@ -189,7 +220,7 @@ public class Duvet extends Activity {
         try {
 			String sexp = RestfulClient.Post(logpath.toString(), map);
 			Log.d(TAG, "sexp=" + sexp);
-			client = new Client(this, uri, sexp);
+			if (client == null) client = new Client(this, uri, sexp);
 			final WebView view = webView;
 			client.setOnStateChangedListener(new Client.OnStateChangedListener() {
 				public void stateChanged(Client client, String content) {
@@ -197,7 +228,7 @@ public class Duvet extends Activity {
 					Log.d(TAG, "stateChange: text=" + text);
  					setMessage(text);
 					setNumChats(client.getNc());
-					handler.post(new Runnable() {
+					new Handler(Looper.getMainLooper()).post(new Runnable() {
 						public void run() {
 							view.loadUrl("javascript:updateMessage()");
 						}
@@ -209,7 +240,6 @@ public class Duvet extends Activity {
 			writeHtml(htmlFile, content, client.getNc());
 			String htmlUri = this.getString(R.string.html_uri);;
 			webView.loadUrl(htmlUri);
-			if (clientThread == null) clientThread = createThread();
 		} catch (JSONException e) {
 			Toast.makeText(this, "Connection Error. Please Re-connection. " + e.getMessage(), Toast.LENGTH_LONG).show();
 			Log.d(TAG, "connect: RuntimeException=" + e + ", message=" + e.getMessage());
@@ -225,35 +255,23 @@ public class Duvet extends Activity {
 		}
     }
 	
-	private HandlerThread createThread() {
-		HandlerThread thread = new HandlerThread("duvet");
-		thread.start();
-		Handler handler = new Handler(thread.getLooper());
-		handler.post(new Runnable (){
-				public void run() {
-					client.longPoll();
-				}
-			});
-		return thread;
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		Handler handler = new Handler(clientThread.getLooper());
+		handler.post(new Runnable() {
+			public void run() {
+				client.setNonStop(false);
+			}
+		});
+		clientThread.getLooper().quit();
+		try {
+			clientThread.join();
+		} catch (InterruptedException e) {
+			Toast.makeText(this, "Thread Error:" + e.getMessage(), Toast.LENGTH_LONG).show();
+			e.printStackTrace();
+		}
 	}
-	
-//	@Override
-//	protected void onDestroy() {
-//		super.onDestroy();
-//		Handler handler = new Handler(clientThread.getLooper());
-//		handler.post(new Runnable() {
-//			public void run() {
-//				client.setNonStop(false);
-//			}
-//		});
-//		clientThread.getLooper().quit();
-//		try {
-//			clientThread.join();
-//		} catch (InterruptedException e) {
-//			Toast.makeText(this, "Thread Error:" + e.getMessage(), Toast.LENGTH_LONG).show();
-//			e.printStackTrace();
-//		}
-//	}
 
 	private void writeHtml(String htmlFile, String content, String nc) throws FileNotFoundException, IOException {
 		FileOutputStream stream = this.openFileOutput(htmlFile, Activity.MODE_PRIVATE);
