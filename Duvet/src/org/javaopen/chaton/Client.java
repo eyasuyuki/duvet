@@ -131,23 +131,23 @@ public class Client {
 		return html;
 	}
 	
-	public void longPoll() {
-		while (isNonStop()) {
-			try {
-				fetchContent(getPos());
-				this.count++;
-				Log.d(TAG, "longPoll: count=" + count);
-//			} catch (InterruptedException e) {
+//	public void longPoll() {
+//		while (isNonStop()) {
+//			try {
+//				fetchContent(getPos());
+//				this.count++;
+//				Log.d(TAG, "longPoll: count=" + count);
+////			} catch (InterruptedException e) {
+////				showError(context, e);
+//			} catch (ClientProtocolException e) {
 //				showError(context, e);
-			} catch (ClientProtocolException e) {
-				showError(context, e);
-			} catch (IOException e) {
-				showError(context, e);
-			} catch (JSONException e) {
-				showError(context, e);
-			}
-		}
-	}
+//			} catch (IOException e) {
+//				showError(context, e);
+//			} catch (JSONException e) {
+//				showError(context, e);
+//			}
+//		}
+//	}
 	
 	public void showError(Context context, Exception e) {
 		Log.d(TAG, "longPoll: e=" + e + ", message=" + e.getMessage() + ", context=" + context);
