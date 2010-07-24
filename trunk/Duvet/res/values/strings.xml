@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Duvet</string>
+	<string name="app_name">Duvet</string>
 	<string name="say_button_label">Say</string>
 	<string name="uri_text_prompt">Rom uri:</string>
 	<string name="nickname_text_prompt">Nickname:</string>
@@ -12,7 +12,7 @@
 	<string name="connect_label">Connect</string>
 	<string name="connect_shortcut">C</string>
 	<string name="uri_title">Setup Room URI:</string>
-	<string name="uri_summary">Setup Chaton Chatroom Room's URI.</string>
+	<string name="uri_summary">Setup Chaton Chatroom Room\'s URI.</string>
 	<string name="nickname_title">Setup Nickname:</string>
 	<string name="nickname_summary">Setup your Chaton nickname.</string>
 	<string name="html_file">client.html</string>
